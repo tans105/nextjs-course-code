@@ -39,26 +39,44 @@ function HomePage(props) {
   return <MeetupList meetups={meetups}/>
 }
 
+// /**
+//  * Prepare props for this page. Nextjs wait for props to load.
+//  * We can use this function to load data before it's rendered to the browser
+//  * It is executed during the build process.
+//  * execute any code which can be run on the server. Like connect to the database, querying, fetch data from api etc.
+//  **/
+// export async function getStaticProps() {
+//   /*
+//   Always need to return object in the format
+//     {
+//       props: {}
+//     };
+//    */
+//   return {
+//     props: {
+//       meetups: DUMMY_MEETUPS
+//     },
+//     revalidate: 10 // used for incremental static generation.
+//     // It will be regenerated atleast 10sec if there are request coming on the page. It will replace the old page. We ensure the data is older than 10sec
+//   };
+// }
+
 /**
- * Prepare props for this page. Nextjs wait for props to load.
- * We can use this function to load data before it's rendered to the browser
- * It is executed during the build process.
+ * It will not run during the build process unlike getStaticProps, it will run on the server after deployment
  * execute any code which can be run on the server. Like connect to the database, querying, fetch data from api etc.
+ * The code always run on the server
+ * We get request and response object from context
+ * Use this function if there is data the changes very frequently. Else better to use getStaticProps
+ * @returns {Promise<void>}
  */
-export async function getStaticProps(){
-  /*
-  Always need to return object in the format
-    {
-      props: {}
-    };
-   */
+export async function getServerSideProps(context) {
+  const {req, res} = context;
   return {
     props: {
       meetups: DUMMY_MEETUPS
-    },
-    revalidate: 10 // used for incremental static generation.
-    // It will be regenerated atleast 10sec if there are request coming on the page. It will replace the old page. We ensure the data is older than 10sec
-  };
+    }
+  }
 }
+
 
 export default HomePage

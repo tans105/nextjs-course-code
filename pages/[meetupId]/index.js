@@ -1,7 +1,8 @@
 import MeetupDetail from "../../components/meetups/MeetupDetail";
+import {MongoClient, ObjectId} from "mongodb";
 
 function MeetupDetails(props) {
-  const {meetup} = props
+  const {meetup} = props;
   return <MeetupDetail image={meetup.image} title={meetup.title} address={meetup.address}
                        description={meetup.description}/>
 }
@@ -17,14 +18,20 @@ export async function getStaticProps(context) {
   const {params} = context;
   const {meetupId} = params;
 
+  const client = await MongoClient.connect('mongodb+srv://tans105:admin123@cluster0.htrct.mongodb.net/meetups?retryWrites=true&w=majority')
+  const db = client.db();
+
+  const meetupsCollection = db.collection('meetups');
+  const selectedMeetup = await meetupsCollection.findOne({_id: ObjectId(meetupId)})
+  console.log(selectedMeetup);
+  await client.close();
   return {
     props: {
       meetup: {
-        id: meetupId,
-        title: 'A First Meetup',
-        image: 'https://pixabay.com/get/g0c89ae35b743833a9c4138072b5686d29198620f08173ff8abb737e0d4ddd2a4c7e11d58adbeadcacd2f22a547b1fc56515a26652cbc2a96f3a7316356604170f29a5393824714ff76d7d7df9c57a108_1280.jpg',
-        address: 'Some address 512345',
-        description: 'This is a first meetup'
+        id: selectedMeetup._id.toString(),
+        title: selectedMeetup.title,
+        image: selectedMeetup.image,
+        description: selectedMeetup.description
       }
     }
   }
@@ -41,6 +48,13 @@ export async function getStaticProps(context) {
  * @returns {Promise<void>}
  */
 export async function getStaticPaths() {
+  const client = await MongoClient.connect('mongodb+srv://tans105:admin123@cluster0.htrct.mongodb.net/meetups?retryWrites=true&w=majority')
+  const db = client.db();
+
+  const meetupsCollection = db.collection('meetups');
+  const meetups = await meetupsCollection.find({}, {_id: 1}).toArray(); // find all collections and extract only _id field
+  await client.close();
+
   // Here we specify all the possible meetupId
   return {
     fallback: false,
@@ -48,23 +62,7 @@ export async function getStaticPaths() {
     //fallback help to generate some pages which we know can be possible
     //fallback : false => We have provided all values
     //fallback : true => There can be other possibility other than specified
-    paths: [
-      {
-        params: {
-          meetupId: 'm1'
-        }
-      },
-      {
-        params: {
-          meetupId: 'm2'
-        }
-      },
-      {
-        params: {
-          meetupId: 'm3'
-        }
-      }
-    ]
+    paths: meetups.map(meetup => ({params: {meetupId: meetup._id.toString()}}))
   }
 }
 
